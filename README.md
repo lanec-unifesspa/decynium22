@@ -1,1 +1,1 @@
-# decynium22
+Data for the research project "Effect of decynium-22 on zebrafish anxiety-like behavior", collected at Laboratório de Neurociências e Comportamento "Frederico Guilherme Graeff", Faculdade de Psicologia, Universidade Federal do Sul e Sudeste do Pará
