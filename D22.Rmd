@@ -1,0 +1,222 @@
+---
+title: "R Notebook for effects of decynium-22 on zebrafish behavior in the light/dark test (LaNeC)"
+author:
+- Caio Maximino^[Universidade Federal do Sul e Sudeste do Pará]
+
+output:
+  github_document 
+
+subtitle: From project "Role of serotonin on behavioral processes relevant to modelling mental disorders"
+tags:
+- light/dark test
+- zebrafish
+- Decynium-22
+abstract: |
+  Behavioral data in the light/dark test after treatment with the uptake2 blocker decynium-22 in adult zebrafish
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Data is produced by members from Laboratório de Neurociências e Comportamento "Frederico Guilherme Graeff", affiliated to Universidade Federal do Sul e Sudeste do Pará and Universidade do Estado do Pará. The package will include primary data for a behavioral experiment on the effects of decynium-22 on zebrafish anxiety-like behavior.
+
+* Load needed libraries
+```{r}
+if(!require(ggplot2)){
+    install.packages("ggplot2")
+    library(ggplot2)
+}
+if(!require(coin)){
+    install.packages("coin")
+    library(coin)
+}
+if(!require(RCurl)){
+    install.packages("RCurl")
+    library(RCurl)
+}
+
+if(!require(plyr)){
+    install.packages("plyr")
+    library(plyr)
+}
+
+if(!require(rcompanion)){
+    install.packages("rcompanion")
+    library(rcompanion)
+}
+
+if(!require(WRS2)){
+    install.packages("WRS2")
+    library(WRS2)
+}
+
+if(!require(psych)){
+    install.packages("psych")
+    library(psych)
+}
+
+if(!require(stats)){
+    install.packages("stats")
+    library(stats)
+}
+
+if(!require(sjstats)){
+    library(devtools)
+    devtools::install_github("strengejacke/sjstats")
+    library(sjstats)
+}
+
+if(!require(multcompView)){
+    install.packages("multcompView")
+    library(multcompView)
+}
+
+if(!require(ggpubr)){
+    install.packages("ggpubr")
+    library(ggpubr)
+}
+
+if(!require(dabestr)){
+    install.packages("dabestr")
+    library(dabestr)
+}
+```
+
+* Load data
+
+```{r}
+x1 <- getURL("https://raw.githubusercontent.com/lanec-unifesspa/decynium22/main/D22LDT.csv")
+D22 <- read.csv(text = x1)
+D22$Dose <- factor(D22$Dose, levels = c("0", "0.01", "0.1", "1", "10"))
+D22$Dose <- as.factor(D22$Dose)
+View(D22)
+```
+
+* Detect outliers (based on time on bottom during exposure) and remove them, using a 3.5xMAD rule
+```{r}
+gA <- D22[c(1:20), ]
+median(gA$TB) + 3.5*mad(gA$TB)
+median(gA$TB) - 3.5*mad(gA$TB)
+
+gB <- D22[c(21:40), ]
+median(gB$TB) + 3.5*mad(gB$TB)
+median(gB$TB) - 3.5*mad(gB$TB)
+
+gC <- D22[c(41:58), ]
+median(gC$TB) + 3.5*mad(gC$TB)
+median(gC$TB) - 3.5*mad(gC$TB)
+
+gD <- D22[c(59:75), ]
+median(gD$TB) + 3.5*mad(gD$TB)
+median(gD$TB) - 3.5*mad(gD$TB)
+
+
+gE <- D22[c(76:90), ]
+median(gE$TB) + 3.5*mad(gE$TB)
+median(gE$TB) - 3.5*mad(gE$TB)
+
+#remove outliers
+D22 <- D22[-c(75),]
+```
+
+* Run ANOVA for main and interaction effects on 2-way ANOVA, for Experiment 1
+
+1) Time on white
+1.1) Analysis
+```{r}
+independence_test(TB ~ Dose, data = D22) #Asymptotic general independence test
+PMTB <- pairwisePermutationMatrix(TB ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMTB, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+1.2) Graphics
+```{r}
+unpaired_mean_diff_TB <- dabest(D22, Dose, TB, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_TB) #Estimation plot
+```
+
+2) Transitions to white
+2.1) Analysis
+```{r}
+independence_test(Transitions ~ Dose, data = D22) #Asymptotic general independence test
+PMTr <- pairwisePermutationMatrix(Transitions ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMTr, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+2.2) Graphics
+```{r}
+unpaired_mean_diff_Tr <- dabest(D22, Dose, Transitions, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_Tr) #Estimation plot
+```
+
+3) Entry duration
+3.1) Analysis
+```{r}
+independence_test(Dur ~ Dose, data = D22) #Asymptotic general independence test
+PMDur <- pairwisePermutationMatrix(Dur ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMDur, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+3.2) Graphics
+```{r}
+unpaired_mean_diff_Dur <- dabest(D22, Dose, Dur, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_Dur) #Estimation plot
+```
+
+4) Risk assessment
+4.1) Analysis
+```{r}
+independence_test(RA ~ Dose, data = D22) #Asymptotic general independence test
+PMRA <- pairwisePermutationMatrix(RA ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMRA, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+4.2) Graphics
+```{r}
+unpaired_mean_diff_RA <- dabest(D22, Dose, RA, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_RA) #Estimation plot
+```
+
+
+5) Erratic swimming
+5.1) Analysis
+```{r}
+independence_test(ES ~ Dose, data = D22) #Asymptotic general independence test
+PMES <- pairwisePermutationMatrix(ES ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMES, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+5.2) Graphics
+```{r}
+unpaired_mean_diff_ES <- dabest(D22, Dose, ES, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_ES) #Estimation plot
+```
+
+6) Thigmotaxis
+6.1) Analysis
+```{r}
+independence_test(Thigmotaxis ~ Dose, data = D22) #Asymptotic general independence test
+PMTh <- pairwisePermutationMatrix(Thigmotaxis ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMTh, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+6.2) Graphics
+```{r}
+unpaired_mean_diff_Th <- dabest(D22, Dose, Thigmotaxis, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_Th) #Estimation plot
+```
+
+7) Freezing
+7.1) Analysis
+```{r}
+independence_test(Freezing ~ Dose, data = D22) #Asymptotic general independence test
+PMFr <- pairwisePermutationMatrix(Freezing ~ Dose, data = D22, method = "fdr")$Adjusted #Pairwise permutation tests
+multcompLetters(PMFr, compare="<", threshold=0.05, Letters=letters, reversed = FALSE) # Compact letter display
+```
+
+7.2) Graphics
+```{r}
+unpaired_mean_diff_Fr <- dabest(D22, Dose, Freezing, idx = c("0", "0.01", "0.1", "1", "10"), paired = FALSE) %>% mean_diff() #Calculate mean differences and confidence intervals
+plot(unpaired_mean_diff_Fr) #Estimation plot
+```
